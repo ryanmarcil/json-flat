@@ -1,0 +1,6 @@
+bin
+.DS_Store
+*.swp
+*.o
+*.out
+make
