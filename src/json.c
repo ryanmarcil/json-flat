@@ -37,7 +37,7 @@ enum json_bool json_character_is_digit(char ascii)
 
 enum json_bool json_character_is_hex(char ascii)
 {
-	return '0' <= ascii && ascii <= '9' || 'A' <= ascii && ascii <= 'F' ? TRUE : FALSE;
+	return '0' <= ascii && ascii <= '9' || 'A' <= ascii && ascii <= 'F' || 'a' <= ascii && ascii <= 'f' ? TRUE : FALSE;
 }
 
 enum json_bool json_character_is_control(char ascii)
