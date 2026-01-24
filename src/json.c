@@ -152,11 +152,6 @@ enum json_state json_null_base(enum json_state state)
 
 enum json_state json_parse(enum json_state state, char ascii)
 {
-	if(json_character_is_whitespace(ascii) == TRUE)
-	{
-		return WHITESPACE;
-	}
-
 	switch(state)
 	{
 		case OBJECT_NUMBER_START:
