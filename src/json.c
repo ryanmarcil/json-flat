@@ -18,7 +18,7 @@
 
 enum json_bool json_character_is_whitespace(char ascii)
 {
-	switch(ascii)
+	switch (ascii)
 	{
 		case ' ':
 		case '\n':
@@ -43,6 +43,21 @@ enum json_bool json_character_is_hex(char ascii)
 enum json_bool json_character_is_control(char ascii)
 {
 	return 0 <= ascii && ascii <= 31 || ascii == 127 ? TRUE : FALSE;
+}
+
+enum json_bool json_character_is_decimal(char ascii)
+{
+	return ascii == '.';
+}
+
+enum json_bool json_character_is_exponent(char ascii)
+{
+	return ascii == 'E' || ascii == 'e' ? TRUE : FALSE;
+}
+
+enum json_bool json_character_is_sign(char ascii)
+{
+	return ascii == '+' || ascii == '-';
 }
 
 enum json_state_string
@@ -72,17 +87,17 @@ enum json_state_null
 
 enum json_state json_string_base(enum json_state state)
 {
-	if(OBJECT_KEY_STRING_START <= state && state <= OBJECT_KEY_STRING_END)
+	if (OBJECT_KEY_STRING_START <= state && state <= OBJECT_KEY_STRING_END)
 	{
 		return OBJECT_KEY_STRING_START;
 	}
 
-	if(OBJECT_STRING_START <= state && state <= OBJECT_STRING_END)
+	if (OBJECT_STRING_START <= state && state <= OBJECT_STRING_END)
 	{
 		return OBJECT_STRING_START;
 	}
 
-	if(ARRAY_STRING_START <= state && state <= ARRAY_STRING_END)
+	if (ARRAY_STRING_START <= state && state <= ARRAY_STRING_END)
 	{
 		return ARRAY_STRING_START;
 	}
@@ -92,12 +107,12 @@ enum json_state json_string_base(enum json_state state)
 
 enum json_state json_number_base(enum json_state state)
 {
-	if(OBJECT_NUMBER_START <= state && state <= OBJECT_NUMBER_END)
+	if (OBJECT_NUMBER_START <= state && state <= OBJECT_NUMBER_END)
 	{
 		return OBJECT_NUMBER_START;
 	}
 
-	if(ARRAY_NUMBER_START <= state && state <= ARRAY_NUMBER_END)
+	if (ARRAY_NUMBER_START <= state && state <= ARRAY_NUMBER_END)
 	{
 		return ARRAY_NUMBER_START;
 	}
@@ -107,12 +122,12 @@ enum json_state json_number_base(enum json_state state)
 
 enum json_state json_true_base(enum json_state state)
 {
-	if(OBJECT_TRUE_START <= state && state <= OBJECT_TRUE_END)
+	if (OBJECT_TRUE_START <= state && state <= OBJECT_TRUE_END)
 	{
 		return OBJECT_TRUE_START;
 	}
 
-	if(ARRAY_TRUE_START <= state && state <= ARRAY_TRUE_END)
+	if (ARRAY_TRUE_START <= state && state <= ARRAY_TRUE_END)
 	{
 		return ARRAY_TRUE_START;
 	}
@@ -122,12 +137,12 @@ enum json_state json_true_base(enum json_state state)
 
 enum json_state json_false_base(enum json_state state)
 {
-	if(OBJECT_FALSE_START <= state && state <= OBJECT_FALSE_END)
+	if (OBJECT_FALSE_START <= state && state <= OBJECT_FALSE_END)
 	{
 		return OBJECT_FALSE_START;
 	}
 
-	if(ARRAY_FALSE_START <= state && state <= ARRAY_FALSE_END)
+	if (ARRAY_FALSE_START <= state && state <= ARRAY_FALSE_END)
 	{
 		return ARRAY_FALSE_START;
 	}
@@ -137,12 +152,12 @@ enum json_state json_false_base(enum json_state state)
 
 enum json_state json_null_base(enum json_state state)
 {
-	if(OBJECT_NULL_START <= state && state <= OBJECT_NULL_END)
+	if (OBJECT_NULL_START <= state && state <= OBJECT_NULL_END)
 	{
 		return OBJECT_NULL_START;
 	}
 
-	if(ARRAY_NULL_START <= state && state <= ARRAY_NULL_END)
+	if (ARRAY_NULL_START <= state && state <= ARRAY_NULL_END)
 	{
 		return ARRAY_NULL_START;
 	}
@@ -152,19 +167,23 @@ enum json_state json_null_base(enum json_state state)
 
 enum json_state json_parse(enum json_state state, char ascii)
 {
-	switch(state)
+	switch (state)
 	{
 		case OBJECT_NUMBER_START:
 		case ARRAY_NUMBER_START:
+		
+		case OBJECT_NUMBER_END:
+		case ARRAY_NUMBER_END:
 			return ERROR;
 
 		case OBJECT_NUMBER_MINUS:
 		case ARRAY_NUMBER_MINUS:
-			if(ascii == '0')
+			if (ascii == '0')
 			{
 				return json_number_base(state) + BASE_NUMBER_ZERO;
 			}
-			if(json_character_is_digit(ascii) == TRUE)
+			
+			if (json_character_is_digit(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER;	
 			}
@@ -173,11 +192,12 @@ enum json_state json_parse(enum json_state state, char ascii)
 	
 		case OBJECT_NUMBER_ZERO:
 		case ARRAY_NUMBER_ZERO:
-			if(ascii == '.')
+			if (json_character_is_decimal(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_FRACTION_START;
 			}
-			if(ascii == 'E' || ascii == 'e')
+			
+			if (json_character_is_exponent(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_EXPONENT_START;
 			}
@@ -187,15 +207,17 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_NUMBER:
 		case ARRAY_NUMBER:
-			if(json_character_is_digit(ascii) == TRUE)
+			if (json_character_is_digit(ascii) == TRUE)
 			{
 				return state;
-			}		
-			if(ascii == '.')
+			}
+			
+			if (json_character_is_decimal(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_FRACTION_START; 
 			}
-			if(ascii == 'E' || ascii == 'e')
+			
+			if (json_character_is_exponent(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_EXPONENT_START;
 			}
@@ -205,7 +227,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_NUMBER_FRACTION_START:
 		case ARRAY_NUMBER_FRACTION_START:
-			if(json_character_is_digit(ascii) == TRUE)
+			if (json_character_is_digit(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_FRACTION;
 			}
@@ -214,11 +236,12 @@ enum json_state json_parse(enum json_state state, char ascii)
 		
 		case OBJECT_NUMBER_FRACTION:
 		case ARRAY_NUMBER_FRACTION:
-			if(json_character_is_digit(ascii) == TRUE)
+			if (json_character_is_digit(ascii) == TRUE)
 			{
 				return state;
 			}
-			if(ascii == 'E' || ascii == 'e')
+			
+			if (json_character_is_exponent(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_EXPONENT_START;
 			}
@@ -228,11 +251,12 @@ enum json_state json_parse(enum json_state state, char ascii)
 	
 		case OBJECT_NUMBER_EXPONENT_START:
 		case ARRAY_NUMBER_EXPONENT_START:
-			if(ascii == '+' || ascii == '-')
+			if (json_character_is_sign(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_EXPONENT_SIGNED;
 			}	
-			if(json_character_is_digit(ascii) == TRUE)
+			
+			if (json_character_is_digit(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_EXPONENT;
 			}
@@ -241,7 +265,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_NUMBER_EXPONENT_SIGNED:
 		case ARRAY_NUMBER_EXPONENT_SIGNED:
-			if(json_character_is_digit(ascii) == TRUE)
+			if (json_character_is_digit(ascii) == TRUE)
 			{
 				return json_number_base(state) + BASE_NUMBER_EXPONENT;
 			}
@@ -250,7 +274,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_NUMBER_EXPONENT:
 		case ARRAY_NUMBER_EXPONENT:
-			if(json_character_is_digit(ascii) == TRUE)
+			if (json_character_is_digit(ascii) == TRUE)
 			{
 				return state;
 			}
@@ -264,41 +288,47 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 	switch(state)
 	{
+		case WHITESPACE:
+		case ERROR:
+		
+		case OBJECT_END:
+		case ARRAY_END:
+			return ERROR;
+			
 		case EMPTY:
-			if(ascii == '{')
+			if (ascii == '{')
 			{
 				return OBJECT_START;
 			}
-			if(ascii == '[')
+			
+			if (ascii == '[')
 			{
 				return ARRAY_START;
 			}
 			
-			return INVALID;
-
-		case WHITESPACE:
-			return ERROR;
+			return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
 
 		case OBJECT_START:
-			if(ascii == '}')
+			if (ascii == '}')
 			{
 				return OBJECT_END;
 			}
+			
 		case OBJECT_KEY:
-			if(ascii == '"')
+			if (ascii == '"')
 			{
 				return OBJECT_KEY_STRING_START;
 			}
 
-			return INVALID;
+			return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
 
 		case OBJECT_KEY_STRING_END:
-			if(ascii == ':')
+			if (ascii == ':')
 			{
 				return OBJECT_COLON;
 			}
 
-			return INVALID;
+			return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
 
 		case OBJECT_COLON:
 			switch(ascii)
@@ -320,12 +350,12 @@ enum json_state json_parse(enum json_state state, char ascii)
 				case 'n':
 					return OBJECT_NULL_START;
 				default:
-					if(json_character_is_digit(ascii) == TRUE)
+					if (json_character_is_digit(ascii) == TRUE)
 					{
 						return OBJECT_NUMBER;
 					}
 
-					return INVALID;
+					return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
 			}	
 
 		case OBJECT_STRING_END:
@@ -333,25 +363,24 @@ enum json_state json_parse(enum json_state state, char ascii)
 		case OBJECT_TRUE_END:
 		case OBJECT_FALSE_END:
 		case OBJECT_NULL_END:
-			if(ascii == ',')
+			if (ascii == ',')
 			{
 				return OBJECT_KEY;
 			}
-			if(ascii == '}')
+			
+			if (ascii == '}')
 			{
 				return OBJECT_END;
 			}
 
-			return INVALID;
-
-		case OBJECT_END:
-			return ERROR;
+			return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
 		
 		case ARRAY_START:
-			if(ascii == ']')
+			if (ascii == ']')
 			{
 				return ARRAY_END;
 			}
+			
 		case ARRAY_VALUE:
 			switch(ascii)
 			{
@@ -372,12 +401,12 @@ enum json_state json_parse(enum json_state state, char ascii)
 				case 'n':
 					return ARRAY_NULL_START;
 				default:
-					if(json_character_is_digit(ascii) == TRUE)
+					if (json_character_is_digit(ascii) == TRUE)
 					{
 						return ARRAY_NUMBER;
 					}
 
-					return INVALID;
+					return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
 			}		
 
 		case ARRAY_STRING_END:
@@ -385,20 +414,18 @@ enum json_state json_parse(enum json_state state, char ascii)
 		case ARRAY_TRUE_END:
 		case ARRAY_FALSE_END:
 		case ARRAY_NULL_END:
-			if(ascii == ',')
+			if (ascii == ',')
 			{
 				return ARRAY_VALUE;
 			}
-			if(ascii == ']')
+			
+			if (ascii == ']')
 			{
 				return ARRAY_END;
 			}
 
-			return INVALID;
-	
-		case ARRAY_END:
-			return ERROR;
-
+			return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
+			
 		case OBJECT_KEY_STRING_START:
 		case OBJECT_KEY_STRING:
 		case OBJECT_KEY_STRING_ESCAPE_END:
@@ -413,20 +440,22 @@ enum json_state json_parse(enum json_state state, char ascii)
 		case ARRAY_STRING:
 		case ARRAY_STRING_ESCAPE_END:
 		case ARRAY_STRING_HEX_END:
-			if(ascii == '\\')
+			if (ascii == '\\')
 			{
 				return json_string_base(state) + BASE_STRING_ESCAPE_START;
 			}
-			if(ascii == '"')
+			
+			if (ascii == '"')
 			{
 				return json_string_base(state) + BASE_STRING_END;
 			}
-			if(json_character_is_control(ascii) == FALSE)
+			
+			if (json_character_is_control(ascii) == FALSE)
 			{
 				return json_string_base(state) + BASE_STRING;
 			}
 
-			return INVALID;
+			return json_character_is_whitespace(ascii) == TRUE ? WHITESPACE : INVALID;
 
 		case OBJECT_KEY_STRING_ESCAPE_START:
 		case OBJECT_STRING_ESCAPE_START:
@@ -451,7 +480,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 		case OBJECT_KEY_STRING_HEX_START:
 		case OBJECT_STRING_HEX_START:
 		case ARRAY_STRING_HEX_START:
-			if(json_character_is_hex(ascii) == TRUE)
+			if (json_character_is_hex(ascii) == TRUE)
 			{
 				return json_string_base(state) + BASE_STRING_HEX0;
 			}
@@ -461,7 +490,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 		case OBJECT_KEY_STRING_HEX0:
 		case OBJECT_STRING_HEX0:
 		case ARRAY_STRING_HEX0:
-			if(json_character_is_hex(ascii) == TRUE)
+			if (json_character_is_hex(ascii) == TRUE)
 			{
 				return json_string_base(state) + BASE_STRING_HEX1;
 			}
@@ -471,7 +500,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 		case OBJECT_KEY_STRING_HEX1:
 		case OBJECT_STRING_HEX1:
 		case ARRAY_STRING_HEX1:
-			if(json_character_is_hex(ascii) == TRUE)
+			if (json_character_is_hex(ascii) == TRUE)
 			{
 				return json_string_base(state) + BASE_STRING_HEX2;
 			}
@@ -481,7 +510,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 		case OBJECT_KEY_STRING_HEX2:
 		case OBJECT_STRING_HEX2:
 		case ARRAY_STRING_HEX2:
-			if(json_character_is_hex(ascii) == TRUE)
+			if (json_character_is_hex(ascii) == TRUE)
 			{
 				return json_string_base(state) + BASE_STRING_HEX_END;
 			}
@@ -490,7 +519,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_TRUE_START:
 		case ARRAY_TRUE_START:
-			if(ascii == 'r')
+			if (ascii == 'r')
 			{
 				return json_true_base(state) + BASE_TRUE1;
 			}
@@ -499,7 +528,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_TRUE1:
 		case ARRAY_TRUE1:
-			if(ascii == 'u')
+			if (ascii == 'u')
 			{
 				return json_true_base(state) + BASE_TRUE2;
 			}
@@ -508,7 +537,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_TRUE2:
 		case ARRAY_TRUE2:
-			if(ascii == 'e')
+			if (ascii == 'e')
 			{
 				return json_true_base(state) + BASE_TRUE_END;
 			}
@@ -517,7 +546,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_FALSE_START:
 		case ARRAY_FALSE_START:
-			if(ascii == 'a')
+			if (ascii == 'a')
 			{
 				return json_false_base(state) + BASE_FALSE1;
 			}
@@ -526,7 +555,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_FALSE1:
 		case ARRAY_FALSE1:
-			if(ascii == 'l')
+			if (ascii == 'l')
 			{
 				return json_false_base(state) + BASE_FALSE2;
 			}
@@ -535,7 +564,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_FALSE2:
 		case ARRAY_FALSE2:
-			if(ascii == 's')
+			if (ascii == 's')
 			{
 				return json_false_base(state) + BASE_FALSE3;
 			}
@@ -544,7 +573,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_FALSE3:
 		case ARRAY_FALSE3:
-			if(ascii == 'e')
+			if (ascii == 'e')
 			{
 				return json_false_base(state) + BASE_FALSE_END;
 			}
@@ -553,7 +582,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_NULL_START:
 		case ARRAY_NULL_START:
-			if(ascii == 'u')
+			if (ascii == 'u')
 			{
 				return json_null_base(state) + BASE_NULL1;
 			}
@@ -562,7 +591,7 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_NULL1:
 		case ARRAY_NULL1:
-			if(ascii == 'l')
+			if (ascii == 'l')
 			{
 				return json_null_base(state) + BASE_NULL2;
 			}
@@ -571,15 +600,12 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 		case OBJECT_NULL2:
 		case ARRAY_NULL2:
-			if(ascii == 'l')
+			if (ascii == 'l')
 			{
 				return json_null_base(state) + BASE_NULL_END;
 			}
 
 			return INVALID;
-
-		case ERROR:
-			return ERROR;
 
 		default:
 			return INVALID;
