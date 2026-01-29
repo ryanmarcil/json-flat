@@ -288,11 +288,15 @@ enum json_state json_parse(enum json_state state, char ascii)
 
 	switch(state)
 	{
-		case WHITESPACE:
-		case ERROR:
-		
 		case OBJECT_END:
 		case ARRAY_END:
+			if (json_character_is_whitespace(ascii) == TRUE)
+			{
+				return WHITESPACE;
+			}
+			
+		case WHITESPACE:
+		case ERROR:
 			return ERROR;
 			
 		case EMPTY:
